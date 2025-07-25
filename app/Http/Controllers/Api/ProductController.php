@@ -7,30 +7,32 @@ use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
-/**
- * @OA\Info(
- *     title="CRUD API Documentation",
- *     version="1.0.0",
- *     description="API documentation for CRUD operations"
- * )
- * @OA\Server(
- *     url="http://localhost:8000",
- *     description="Development server"
- * )
- */
 class ProductController extends Controller
 {
     /**
      * @OA\Get(
      *     path="/api/products",
      *     summary="Get all products",
+     *     description="Retrieve a list of all products",
      *     tags={"Products"},
      *     @OA\Response(
      *         response=200,
-     *         description="List of products",
+     *         description="List of products retrieved successfully",
      *         @OA\JsonContent(
-     *             type="array",
-     *             @OA\Items(ref="#/components/schemas/Product")
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="name", type="string", example="Laptop"),
+     *                     @OA\Property(property="description", type="string", example="High-performance laptop"),
+     *                     @OA\Property(property="price", type="number", format="float", example=999.99),
+     *                     @OA\Property(property="stock", type="integer", example=10),
+     *                     @OA\Property(property="created_at", type="string", format="date-time"),
+     *                     @OA\Property(property="updated_at", type="string", format="date-time")
+     *                 )
+     *             )
      *         )
      *     )
      * )
@@ -48,19 +50,52 @@ class ProductController extends Controller
      * @OA\Post(
      *     path="/api/products",
      *     summary="Create a new product",
+     *     description="Create a new product with the provided information",
      *     tags={"Products"},
      *     @OA\RequestBody(
      *         required=true,
-     *         @OA\JsonContent(ref="#/components/schemas/ProductRequest")
+     *         description="Product data",
+     *         @OA\JsonContent(
+     *             required={"name", "description", "price", "stock"},
+     *             @OA\Property(property="name", type="string", maxLength=255, example="Laptop"),
+     *             @OA\Property(property="description", type="string", example="High-performance laptop"),
+     *             @OA\Property(property="price", type="number", format="float", minimum=0, example=999.99),
+     *             @OA\Property(property="stock", type="integer", minimum=0, example=10)
+     *         )
      *     ),
      *     @OA\Response(
      *         response=201,
      *         description="Product created successfully",
-     *         @OA\JsonContent(ref="#/components/schemas/Product")
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Product created successfully"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="name", type="string", example="Laptop"),
+     *                 @OA\Property(property="description", type="string", example="High-performance laptop"),
+     *                 @OA\Property(property="price", type="number", format="float", example=999.99),
+     *                 @OA\Property(property="stock", type="integer", example=10),
+     *                 @OA\Property(property="created_at", type="string", format="date-time"),
+     *                 @OA\Property(property="updated_at", type="string", format="date-time")
+     *             )
+     *         )
      *     ),
      *     @OA\Response(
      *         response=422,
-     *         description="Validation error"
+     *         description="Validation error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="The given data was invalid."),
+     *             @OA\Property(
+     *                 property="errors",
+     *                 type="object",
+     *                 @OA\Property(
+     *                     property="name",
+     *                     type="array",
+     *                     @OA\Items(type="string", example="The name field is required.")
+     *                 )
+     *             )
+     *         )
      *     )
      * )
      */
@@ -86,21 +121,38 @@ class ProductController extends Controller
      * @OA\Get(
      *     path="/api/products/{id}",
      *     summary="Get a specific product",
+     *     description="Retrieve a specific product by its ID",
      *     tags={"Products"},
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         required=true,
-     *         @OA\Schema(type="integer")
+     *         description="Product ID",
+     *         @OA\Schema(type="integer", example=1)
      *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Product details",
-     *         @OA\JsonContent(ref="#/components/schemas/Product")
+     *         description="Product details retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(
+     *                 property="data",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="name", type="string", example="Laptop"),
+     *                 @OA\Property(property="description", type="string", example="High-performance laptop"),
+     *                 @OA\Property(property="price", type="number", format="float", example=999.99),
+     *                 @OA\Property(property="stock", type="integer", example=10),
+     *                 @OA\Property(property="created_at", type="string", format="date-time"),
+     *                 @OA\Property(property="updated_at", type="string", format="date-time")
+     *             )
+     *         )
      *     ),
      *     @OA\Response(
      *         response=404,
-     *         description="Product not found"
+     *         description="Product not found",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="No query results for model")
+     *         )
      *     )
      * )
      */
@@ -116,29 +168,66 @@ class ProductController extends Controller
      * @OA\Put(
      *     path="/api/products/{id}",
      *     summary="Update a product",
+     *     description="Update an existing product with new information",
      *     tags={"Products"},
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         required=true,
-     *         @OA\Schema(type="integer")
+     *         description="Product ID",
+     *         @OA\Schema(type="integer", example=1)
      *     ),
      *     @OA\RequestBody(
      *         required=true,
-     *         @OA\JsonContent(ref="#/components/schemas/ProductRequest")
+     *         description="Updated product data",
+     *         @OA\JsonContent(
+     *             required={"name", "description", "price", "stock"},
+     *             @OA\Property(property="name", type="string", maxLength=255, example="Updated Laptop"),
+     *             @OA\Property(property="description", type="string", example="Updated high-performance laptop"),
+     *             @OA\Property(property="price", type="number", format="float", minimum=0, example=1199.99),
+     *             @OA\Property(property="stock", type="integer", minimum=0, example=15)
+     *         )
      *     ),
      *     @OA\Response(
      *         response=200,
      *         description="Product updated successfully",
-     *         @OA\JsonContent(ref="#/components/schemas/Product")
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Product updated successfully"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="name", type="string", example="Updated Laptop"),
+     *                 @OA\Property(property="description", type="string", example="Updated high-performance laptop"),
+     *                 @OA\Property(property="price", type="number", format="float", example=1199.99),
+     *                 @OA\Property(property="stock", type="integer", example=15),
+     *                 @OA\Property(property="created_at", type="string", format="date-time"),
+     *                 @OA\Property(property="updated_at", type="string", format="date-time")
+     *             )
+     *         )
      *     ),
      *     @OA\Response(
      *         response=404,
-     *         description="Product not found"
+     *         description="Product not found",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="No query results for model")
+     *         )
      *     ),
      *     @OA\Response(
      *         response=422,
-     *         description="Validation error"
+     *         description="Validation error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="The given data was invalid."),
+     *             @OA\Property(
+     *                 property="errors",
+     *                 type="object",
+     *                 @OA\Property(
+     *                     property="name",
+     *                     type="array",
+     *                     @OA\Items(type="string", example="The name field is required.")
+     *                 )
+     *             )
+     *         )
      *     )
      * )
      */
@@ -164,20 +253,29 @@ class ProductController extends Controller
      * @OA\Delete(
      *     path="/api/products/{id}",
      *     summary="Delete a product",
+     *     description="Delete an existing product by its ID",
      *     tags={"Products"},
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         required=true,
-     *         @OA\Schema(type="integer")
+     *         description="Product ID",
+     *         @OA\Schema(type="integer", example=1)
      *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Product deleted successfully"
+     *         description="Product deleted successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Product deleted successfully")
+     *         )
      *     ),
      *     @OA\Response(
      *         response=404,
-     *         description="Product not found"
+     *         description="Product not found",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="No query results for model")
+     *         )
      *     )
      * )
      */
@@ -191,29 +289,3 @@ class ProductController extends Controller
         ]);
     }
 }
-
-/**
- * @OA\Schema(
- *     schema="Product",
- *     type="object",
- *     @OA\Property(property="id", type="integer", example=1),
- *     @OA\Property(property="name", type="string", example="Laptop"),
- *     @OA\Property(property="description", type="string", example="High-performance laptop"),
- *     @OA\Property(property="price", type="number", format="float", example=999.99),
- *     @OA\Property(property="stock", type="integer", example=10),
- *     @OA\Property(property="created_at", type="string", format="date-time"),
- *     @OA\Property(property="updated_at", type="string", format="date-time")
- * )
- */
-
-/**
- * @OA\Schema(
- *     schema="ProductRequest",
- *     type="object",
- *     required={"name", "description", "price", "stock"},
- *     @OA\Property(property="name", type="string", example="Laptop"),
- *     @OA\Property(property="description", type="string", example="High-performance laptop"),
- *     @OA\Property(property="price", type="number", format="float", example=999.99),
- *     @OA\Property(property="stock", type="integer", example=10)
- * )
- */
